@@ -1,0 +1,66 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!--Styles pathes buttons-->
+    <Style TargetType="Button" x:Key="styleButtonPathes">
+        <Setter Property="FontFamily" Value="Cascadia Code"></Setter>
+        <Setter Property="FontSize" Value="14"></Setter>
+        <Setter Property="Height" Value="35"></Setter>
+        <Setter Property="Width" Value="450"></Setter>
+    </Style>
+
+    <ControlTemplate TargetType="Button" x:Key="templateButtonPathes">
+        <Border x:Name="borderBtn" BorderBrush="Gray" CornerRadius="15" Background="Gray">
+            <ContentControl Margin="{TemplateBinding Padding}"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                Content="{TemplateBinding Content}" />
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="true">
+                <Setter TargetName="borderBtn" Property="Background" Value="#FF4D98FF"></Setter>
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+    <!--Styles pathes buttons-->
+
+
+    <!--Close and Hide-->
+    <ControlTemplate TargetType="Button" x:Key="buttonCloseTemplate">
+        <Border x:Name="borderClose" CornerRadius="5" Background="#FF354247">
+            <TextBlock Text="X" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White"></TextBlock>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="true">
+                <Setter TargetName="borderClose" Property="Background" Value="#FFED3939"></Setter>
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+    <ControlTemplate TargetType="Button" x:Key="buttonHideTemplate">
+        <Border x:Name="borderHide" CornerRadius="5" Background="#FF354247">
+            <TextBlock FontSize="24" Text="-" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White"></TextBlock>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="true">
+                <Setter TargetName="borderHide" Property="Background" Value="#FF4D98FF"></Setter>
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+    <!--Close and Hide-->
+
+    <!--Progress bar-->
+    <Style x:Key="CustomProgressBarStyle" TargetType="ProgressBar">
+        <Setter Property="Foreground" Value="Blue"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Grid x:Name="TemplateRoot" Background="{TemplateBinding Background}" SnapsToDevicePixels="true">
+                        <Rectangle x:Name="PART_Track" RadiusX="5" RadiusY="5" Fill="#80C7C7C7"/>
+                        <Rectangle x:Name="PART_Indicator" RadiusX="5" RadiusY="5" Fill="{TemplateBinding Foreground}" Margin="2"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!--Progress bar-->
+</ResourceDictionary>
