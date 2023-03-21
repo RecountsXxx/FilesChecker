@@ -27,6 +27,8 @@ namespace ExamFiles_Net_
     {
         private object locker = new object();
 
+        private bool IsStop = false;
+
         private List<FileInfo> pathes = new List<FileInfo>();
         private List<string> pathesNew = new List<string>();
         private List<string> words = new List<string>();
@@ -183,6 +185,7 @@ namespace ExamFiles_Net_
         }
         private async void searhWordButton_Click(object sender, RoutedEventArgs e)
         {
+            IsStop = false;
             if (pathSave != null)
             {
                 if(pathWords != null)
@@ -191,17 +194,19 @@ namespace ExamFiles_Net_
 
                     await Task.Factory.StartNew(() =>
                     {
+
                         foreach (var item in logicalDisksArray)
                         {
                             threadGetFiles = new Thread(() => GetFiles(item));
-                            threadGetFiles.Start();
-                            threadGetFiles.Join();
+                                threadGetFiles.Start();
+                                threadGetFiles.Join();
                         }
                     });
-
+                    if(pathes.Count > 0)
                     pathes.Remove(pathes.Where(x=>x.FullName == pathWords).Select(x=>x).First());
                     threadGetListFiles = new Thread(GetListFiles);
-                    threadGetListFiles.Start();
+                        threadGetListFiles.Start();
+                    
                 }
                 else
                 {
@@ -245,29 +250,37 @@ namespace ExamFiles_Net_
         {
             lock (locker)
             {
-                try
-                {
-                    DirectoryInfo dir = new DirectoryInfo(path);
+          
+                    try
+                    {
+                        DirectoryInfo dir = new DirectoryInfo(path);
 
-                    FileInfo[] files = dir.GetFiles("*.txt");
-                    foreach (FileInfo f in files)
-                    {
-                        pathes.Add(f);
+                        FileInfo[] files = dir.GetFiles("*.txt");
+                        foreach (FileInfo f in files)
+                        {
+                        if (IsStop == false)
+                            pathes.Add(f);
+                        else
+                            Thread.CurrentThread.Abort();
+                        }
+                        foreach (DirectoryInfo d in dir.GetDirectories())
+                        {
+                        if (IsStop == false)
+                            GetFiles(path + d.Name + @"\");
+                        else
+                            Thread.CurrentThread.Abort();
+                        }
                     }
-                    foreach (DirectoryInfo d in dir.GetDirectories())
+                    catch (Exception e)
                     {
-                        GetFiles(path + d.Name + @"\");
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                    Dispatcher.BeginInvoke((Action)(() =>
-                    {
-                        progressBarScaningPathes.Value += 0.45;
-                    }));
+                        Console.WriteLine(e.Message);
+                        Dispatcher.BeginInvoke((Action)(() =>
+                        {
+                            progressBarScaningPathes.Value += 0.45;
+                        }));
 
-                }
+                    }
+  
             }
         }
         public async void GetListFiles()
@@ -279,25 +292,32 @@ namespace ExamFiles_Net_
 
                 foreach (var item in pathes)
                 {
-                    try
+                    if (IsStop == false)
                     {
-                        AmountWordsInFilePerEveryWord(item);
-                        int wordCount = CountWordInFile(item.FullName);
-                      
-                        if (wordCount > 0)
+                        try
                         {
-                            string report = string.Format("Path -  {0}, Size - {1}, Count replaces - {2}, Top 10 - {3}\r\n", item.FullName, item.Length, wordCount, wordCount);
-                            using (StreamWriter writer = new StreamWriter(pathSave + "/ReportFile.txt", true))
+                            AmountWordsInFilePerEveryWord(item);
+                            int wordCount = CountWordInFile(item.FullName);
+
+                            if (wordCount > 0)
                             {
-                                writer.WriteLine(report);
+                                string report = string.Format("Path -  {0}, Size - {1}, Count replaces - {2}, Top 10 - {3}\r\n", item.FullName, item.Length, wordCount, wordCount);
+                                using (StreamWriter writer = new StreamWriter(pathSave + "/ReportFile.txt", true))
+                                {
+                                    writer.WriteLine(report);
+                                }
+                                Thread thread = new Thread(() => CopyFile(item.FullName));
+                                thread.Start();
                             }
-                            Thread thread = new Thread(() => CopyFile(item.FullName));
-                            thread.Start();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
                         }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        Console.WriteLine(ex.Message);
+                        Thread.CurrentThread.Abort();
                     }
                 }
             }
@@ -459,13 +479,16 @@ namespace ExamFiles_Net_
         #region Thread buttons
         private void pauseThreadButton_Click(object sender, RoutedEventArgs e)
         {
+            if(threadGetFiles != null && threadGetFiles.ThreadState == System.Threading.ThreadState.Running)
             threadGetFiles.Suspend();
+            if (threadGetListFiles != null && threadGetListFiles.ThreadState == System.Threading.ThreadState.Running)
+                threadGetListFiles.Suspend();
         }
         private void stopThreadButton_Click(object sender, RoutedEventArgs e)
         {
-            
-                threadGetFiles.Abort();
-            progressBarScaningPathes.Value = 100;
+
+            IsStop = true;
+            ResetUIAndLists();
 
 
         }
@@ -474,6 +497,10 @@ namespace ExamFiles_Net_
             if (threadGetFiles.ThreadState != System.Threading.ThreadState.Stopped)
             {
                 threadGetFiles.Resume();
+            }
+            if (threadGetListFiles.ThreadState != System.Threading.ThreadState.Stopped)
+            {
+                threadGetListFiles.Resume();
             }
         }
         #endregion
